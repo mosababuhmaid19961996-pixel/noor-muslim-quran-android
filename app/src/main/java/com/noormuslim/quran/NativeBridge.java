@@ -13,6 +13,54 @@ public final class NativeBridge {
 
     @JavascriptInterface public boolean isNative() { return true; }
 
+    @JavascriptInterface public boolean hasNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT < 33) return true;
+        return activity.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED;
+    }
+
+    @JavascriptInterface public void requestNotificationPermission() {
+        activity.runOnUiThread(() -> {
+            if (android.os.Build.VERSION.SDK_INT < 33) {
+                activity.notifyNotificationPermissionResult(true);
+                return;
+            }
+            if (hasNotificationPermission()) {
+                activity.notifyNotificationPermissionResult(true);
+                return;
+            }
+            activity.requestPermissions(
+                    new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 2026);
+        });
+    }
+
+    @JavascriptInterface public boolean isReminderEnabled() {
+        return ReminderReceiver.isEnabled(activity) && hasNotificationPermission();
+    }
+
+    @JavascriptInterface public void setReminderEnabled(boolean enabled) {
+        if (!enabled) {
+            ReminderReceiver.setEnabled(activity, false);
+            return;
+        }
+        if (hasNotificationPermission()) {
+            ReminderReceiver.setEnabled(activity, true);
+        }
+    }
+
+    @JavascriptInterface public void testReminder() {
+        if (hasNotificationPermission()) ReminderReceiver.showTestReminder(activity);
+    }
+
+    @JavascriptInterface public void openNotificationSettings() {
+        activity.runOnUiThread(() -> {
+            android.content.Intent i = new android.content.Intent(
+                    android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+            i.putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, activity.getPackageName());
+            activity.startActivity(i);
+        });
+    }
+
     @JavascriptInterface public boolean isDownloaded(String key, int surah) {
         return NativeDownloadStore.isDownloaded(activity, key, surah);
     }
