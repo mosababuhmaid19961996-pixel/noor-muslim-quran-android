@@ -1,0 +1,130 @@
+const CATALOG_URLS=['https://mp3quran.net/api/v3/reciters?language=ar','https://cdn.jsdelivr.net/gh/uthumany/Quran-Fast-Api-json@main/data/quran_reciters.json','https://raw.githubusercontent.com/uthumany/Quran-Fast-Api-json/main/data/quran_reciters.json'];
+const QURAN_URL='https://api.alquran.cloud/v1';
+const names=['الفاتحة','البقرة','آل عمران','النساء','المائدة','الأنعام','الأعراف','الأنفال','التوبة','يونس','هود','يوسف','الرعد','إبراهيم','الحجر','النحل','الإسراء','الكهف','مريم','طه','الأنبياء','الحج','المؤمنون','النور','الفرقان','الشعراء','النمل','القصص','العنكبوت','الروم','لقمان','السجدة','الأحزاب','سبأ','فاطر','يس','الصافات','ص','الزمر','غافر','فصلت','الشورى','الزخرف','الدخان','الجاثية','الأحقاف','محمد','الفتح','الحجرات','ق','الذاريات','الطور','النجم','القمر','الرحمن','الواقعة','الحديد','المجادلة','الحشر','الممتحنة','الصف','الجمعة','المنافقون','التغابن','الطلاق','التحريم','الملك','القلم','الحاقة','المعارج','نوح','الجن','المزمل','المدثر','القيامة','الإنسان','المرسلات','النبأ','النازعات','عبس','التكوير','الانفطار','المطففين','الانشقاق','البروج','الطارق','الأعلى','الغاشية','الفجر','البلد','الشمس','الليل','الضحى','الشرح','التين','العلق','القدر','البينة','الزلزلة','العاديات','القارعة','التكاثر','العصر','الهمزة','الفيل','قريش','الماعون','الكوثر','الكافرون','النصر','المسد','الإخلاص','الفلق','الناس'];
+let reciters=[],selected=null,currentSurah=1,ayahs=[],timings=[],currentAyahIndex=0,audioCandidates=[],candidateIndex=0;
+const RECITER_FAV_KEY='quran_favorite_reciters';
+let favoriteReciters=new Set(JSON.parse(localStorage.getItem(RECITER_FAV_KEY)||'[]'));
+const SETTINGS_KEY='noor_muslim_settings_v43';
+
+const UI_LANGS={
+ ar:{name:'العربية',dir:'rtl',texts:{'القرآن الكريم':'القرآن الكريم','استماع صوتي':'استماع صوتي','⚙️ الإعدادات':'⚙️ الإعدادات','🎧 قرآن صوتي فقط':'🎧 قرآن صوتي فقط','استمع إلى كتاب الله':'استمع إلى كتاب الله','بأصوات القرّاء':'بأصوات القرّاء','اختر القارئ ثم السورة وابدأ الاستماع مباشرة.':'اختر القارئ ثم السورة وابدأ الاستماع مباشرة.','📲 تثبيت الموقع على الهاتف':'📲 تثبيت الموقع على الهاتف','كل قارئ ظاهر هنا مرتبط بتلاوة كاملة للسور الـ114.':'كل قارئ ظاهر هنا مرتبط بتلاوة كاملة للسور الـ114.','تلاوة كاملة':'تلاوة كاملة','كل القرّاء':'كل القرّاء','⭐ المفضلة':'⭐ المفضلة','اختيار السورة':'اختيار السورة','القارئ':'القارئ','⬇ تنزيل الكل':'⬇ تنزيل الكل','تخصيص التطبيق':'تخصيص التطبيق','إعدادات لخدمة المستخدم فقط — بدون إعلانات أو اشتراكات.':'إعدادات لخدمة المستخدم فقط — بدون إعلانات أو اشتراكات.','🔊 الصوت والتشغيل':'🔊 الصوت والتشغيل','مستوى الصوت':'مستوى الصوت','تشغيل السورة التالية تلقائيًا':'تشغيل السورة التالية تلقائيًا','التشغيل التلقائي عند اختيار السورة':'التشغيل التلقائي عند اختيار السورة','🎨 المظهر والقراءة':'🎨 المظهر والقراءة','الوضع الداكن':'الوضع الداكن','حجم الخط':'حجم الخط','صغير':'صغير','متوسط':'متوسط','كبير':'كبير','🔔 التنبيهات':'🔔 التنبيهات','السماح بتنبيهات القرآن الكريم':'السماح بتنبيهات القرآن الكريم','التنبيهات اختيارية، ولن تُستخدم للإعلانات.':'التنبيهات اختيارية، ولن تُستخدم للإعلانات.','📥 التنزيلات':'📥 التنزيلات','🗑️ إدارة السور المحفوظة':'🗑️ إدارة السور المحفوظة','🌐 اللغة':'🌐 اللغة','لغة واجهة التطبيق':'لغة واجهة التطبيق','تتغير واجهة التطبيق حسب اللغة المختارة، بينما يبقى نص القرآن الكريم باللغة العربية.':'تتغير واجهة التطبيق حسب اللغة المختارة، بينما يبقى نص القرآن الكريم باللغة العربية.','ℹ️ حول القرآن الكريم':'ℹ️ حول القرآن الكريم'},langs:'العربية'},
+ en:{name:'English',dir:'ltr',texts:{'القرآن الكريم':'Holy Quran','استماع صوتي':'Audio Recitation','⚙️ الإعدادات':'⚙️ Settings','🎧 قرآن صوتي فقط':'🎧 Audio Quran','استمع إلى كتاب الله':'Listen to the Book of Allah','بأصوات القرّاء':'With Quran Reciters','اختر القارئ ثم السورة وابدأ الاستماع مباشرة.':'Choose a reciter, then a surah, and start listening.','📲 تثبيت الموقع على الهاتف':'📲 Install on phone','كل قارئ ظاهر هنا مرتبط بتلاوة كاملة للسور الـ114.':'Each reciter has a complete recitation of all 114 surahs.','تلاوة كاملة':'Complete recitation','كل القرّاء':'All Reciters','⭐ المفضلة':'⭐ Favorites','اختيار السورة':'Choose a surah','القارئ':'Reciter','⬇ تنزيل الكل':'⬇ Download All','تخصيص التطبيق':'Customize the app','إعدادات لخدمة المستخدم فقط — بدون إعلانات أو اشتراكات.':'Settings for serving users only — no ads or subscriptions.','🔊 الصوت والتشغيل':'🔊 Audio & Playback','مستوى الصوت':'Volume','تشغيل السورة التالية تلقائيًا':'Auto-play next surah','التشغيل التلقائي عند اختيار السورة':'Auto-play when selecting a surah','🎨 المظهر والقراءة':'🎨 Appearance & Reading','الوضع الداكن':'Dark mode','حجم الخط':'Font size','صغير':'Small','متوسط':'Medium','كبير':'Large','🔔 التنبيهات':'🔔 Notifications','السماح بتنبيهات القرآن الكريم':'Allow Quran notifications','التنبيهات اختيارية، ولن تُستخدم للإعلانات.':'Notifications are optional and never used for ads.','📥 التنزيلات':'📥 Downloads','🗑️ إدارة السور المحفوظة':'🗑️ Manage saved surahs','🌐 اللغة':'🌐 Language','لغة واجهة التطبيق':'App interface language','تتغير واجهة التطبيق حسب اللغة المختارة، بينما يبقى نص القرآن الكريم باللغة العربية.':'The interface changes with the selected language; Quran text remains Arabic.','ℹ️ حول القرآن الكريم':'ℹ️ About Noor Al-Muslim'},langs:'English'},
+ tr:{name:'Türkçe',dir:'ltr',texts:{'القرآن الكريم':'Kur’an-ı Kerim','استماع صوتي':'Sesli Tilavet','⚙️ الإعدادات':'⚙️ Ayarlar','🎧 قرآن صوتي فقط':'🎧 Sadece Sesli Kur’an','استمع إلى كتاب الله':'Allah’ın Kitabı’nı dinleyin','بأصوات القرّاء':'Kur’an okuyucularının sesleriyle','اختر القارئ ثم السورة وابدأ الاستماع مباشرة.':'Okuyucuyu ve sureyi seçin, hemen dinlemeye başlayın.','📲 تثبيت الموقع على الهاتف':'📲 Telefona yükle','كل قارئ ظاهر هنا مرتبط بتلاوة كاملة للسور الـ114.':'Her okuyucuda 114 surenin tamamı bulunur.','تلاوة كاملة':'Tam tilavet','كل القرّاء':'Tüm Okuyucular','⭐ المفضلة':'⭐ Favoriler','اختيار السورة':'Sure seçin','القارئ':'Okuyucu','⬇ تنزيل الكل':'⬇ Tümünü indir','🔊 الصوت والتشغيل':'🔊 Ses ve oynatma','مستوى الصوت':'Ses seviyesi','تشغيل السورة التالية تلقائيًا':'Sonraki sureyi otomatik oynat','التشغيل التلقائي عند اختيار السورة':'Sure seçilince otomatik oynat','🎨 المظهر والقراءة':'🎨 Görünüm ve okuma','الوضع الداكن':'Karanlık mod','حجم الخط':'Yazı boyutu','صغير':'Küçük','متوسط':'Orta','كبير':'Büyük','🔔 التنبيهات':'🔔 Bildirimler','السماح بتنبيهات القرآن الكريم':'Kur’an bildirimlerine izin ver','📥 التنزيلات':'📥 İndirmeler','🗑️ إدارة السور المحفوظة':'🗑️ Kayıtlı sureleri yönet','🌐 اللغة':'🌐 Dil','لغة واجهة التطبيق':'Uygulama dili','تتغير واجهة التطبيق حسب اللغة المختارة، بينما يبقى نص القرآن الكريم باللغة العربية.':'Arayüz seçilen dile göre değişir; Kur’an metni Arapça kalır.','ℹ️ حول القرآن الكريم':'ℹ️ Noor Al-Muslim hakkında'},langs:'Türkçe'},
+ fr:{name:'Français',dir:'ltr',texts:{'القرآن الكريم':'Coran','استماع صوتي':'Récitation audio','⚙️ الإعدادات':'⚙️ Paramètres','🎧 قرآن صوتي فقط':'🎧 Coran audio','استمع إلى كتاب الله':'Écoutez le Livre d’Allah','بأصوات القرّاء':'Avec les récitations des lecteurs','اختر القارئ ثم السورة وابدأ الاستماع مباشرة.':'Choisissez un lecteur puis une sourate pour commencer.','📲 تثبيت الموقع على الهاتف':'📲 Installer sur le téléphone','كل القرّاء':'Tous les lecteurs','⭐ المفضلة':'⭐ Favoris','اختيار السورة':'Choisir une sourate','القارئ':'Lecteur','⬇ تنزيل الكل':'⬇ Tout télécharger','🔊 الصوت والتشغيل':'🔊 Audio et lecture','مستوى الصوت':'Volume','تشغيل السورة التالية تلقائيًا':'Lire la sourate suivante automatiquement','التشغيل التلقائي عند اختيار السورة':'Lecture automatique à la sélection','🎨 المظهر والقراءة':'🎨 Apparence et lecture','الوضع الداكن':'Mode sombre','حجم الخط':'Taille du texte','صغير':'Petit','متوسط':'Moyen','كبير':'Grand','🔔 التنبيهات':'🔔 Notifications','السماح بتنبيهات القرآن الكريم':'Autoriser les notifications','📥 التنزيلات':'📥 Téléchargements','🗑️ إدارة السور المحفوظة':'🗑️ Gérer les sourates enregistrées','🌐 اللغة':'🌐 Langue','لغة واجهة التطبيق':'Langue de l’application','تتغير واجهة التطبيق حسب اللغة المختارة، بينما يبقى نص القرآن الكريم باللغة العربية.':'L’interface change selon la langue; le texte du Coran reste en arabe.','ℹ️ حول القرآن الكريم':'ℹ️ À propos de Noor Al-Muslim'},langs:'Français'},
+ ur:{name:'اردو',dir:'rtl',texts:{'القرآن الكريم':'قرآن کریم','استماع صوتي':'آڈیو تلاوت','⚙️ الإعدادات':'⚙️ ترتیبات','🎧 قرآن صوتي فقط':'🎧 صرف قرآن آڈیو','استمع إلى كتاب الله':'اللہ کی کتاب سنیں','بأصوات القرّاء':'قرآن کے قراء کی آوازوں میں','اختر القارئ ثم السورة وابدأ الاستماع مباشرة.':'قاری اور سورت منتخب کریں اور فوراً سماعت شروع کریں۔','📲 تثبيت الموقع على الهاتف':'📲 فون پر انسٹال کریں','كل القرّاء':'تمام قراء','⭐ المفضلة':'⭐ پسندیدہ','اختيار السورة':'سورت منتخب کریں','القارئ':'قاری','⬇ تنزيل الكل':'⬇ سب ڈاؤن لوڈ کریں','🔊 الصوت والتشغيل':'🔊 آواز اور پلے بیک','مستوى الصوت':'آواز کی سطح','تشغيل السورة التالية تلقائيًا':'اگلی سورت خود چلائیں','التشغيل التلقائي عند اختيار السورة':'سورت منتخب کرتے ہی چلائیں','🎨 المظهر والقراءة':'🎨 ظاہری شکل اور مطالعہ','الوضع الداكن':'ڈارک موڈ','حجم الخط':'فونٹ سائز','صغير':'چھوٹا','متوسط':'درمیانہ','كبير':'بڑا','🔔 التنبيهات':'🔔 اطلاعات','السماح بتنبيهات القرآن الكريم':'قرآن کریم کی اطلاعات کی اجازت دیں','📥 التنزيلات':'📥 ڈاؤن لوڈز','🗑️ إدارة السور المحفوظة':'🗑️ محفوظ سورتوں کا انتظام','🌐 اللغة':'🌐 زبان','لغة واجهة التطبيق':'ایپ کی زبان','تتغير واجهة التطبيق حسب اللغة المختارة، بينما يبقى نص القرآن الكريم باللغة العربية.':'ایپ کی زبان تبدیل ہوگی، قرآن کا متن عربی ہی رہے گا۔','ℹ️ حول القرآن الكريم':'ℹ️ نور المسلم کے بارے میں'},langs:'اردو'},
+ id:{name:'Bahasa Indonesia',dir:'ltr',texts:{'القرآن الكريم':'Al-Qur’an','استماع صوتي':'Tilawah Audio','⚙️ الإعدادات':'⚙️ Pengaturan','🎧 قرآن صوتي فقط':'🎧 Al-Qur’an Audio','استمع إلى كتاب الله':'Dengarkan Kitab Allah','بأصوات القرّاء':'Dengan suara para qari','اختر القارئ ثم السورة وابدأ الاستماع مباشرة.':'Pilih qari dan surah untuk mulai mendengarkan.','📲 تثبيت الموقع على الهاتف':'📲 Pasang di ponsel','كل القرّاء':'Semua Qari','⭐ المفضلة':'⭐ Favorit','اختيار السورة':'Pilih surah','القارئ':'Qari','⬇ تنزيل الكل':'⬇ Unduh Semua','🔊 الصوت والتشغيل':'🔊 Audio & Pemutaran','مستوى الصوت':'Volume','تشغيل السورة التالية تلقائيًا':'Putar surah berikutnya otomatis','التشغيل التلقائي عند اختيار السورة':'Putar otomatis saat memilih surah','🎨 المظهر والقراءة':'🎨 Tampilan & Bacaan','الوضع الداكن':'Mode gelap','حجم الخط':'Ukuran font','صغير':'Kecil','متوسط':'Sedang','كبير':'Besar','🔔 التنبيهات':'🔔 Notifikasi','السماح بتنبيهات القرآن الكريم':'Izinkan notifikasi Al-Qur’an','📥 التنزيلات':'📥 Unduhan','🗑️ إدارة السور المحفوظة':'🗑️ Kelola surah tersimpan','🌐 اللغة':'🌐 Bahasa','لغة واجهة التطبيق':'Bahasa aplikasi','تتغير واجهة التطبيق حسب اللغة المختارة، بينما يبقى نص القرآن الكريم باللغة العربية.':'Antarmuka berubah sesuai bahasa; teks Al-Qur’an tetap dalam bahasa Arab.','ℹ️ حول القرآن الكريم':'ℹ️ Tentang Noor Al-Muslim'},langs:'Bahasa Indonesia'}
+};
+function currentLang(){return getSettings().language||'ar'}
+function applyLanguage(){const key=currentLang(), L=UI_LANGS[key]||UI_LANGS.ar; document.documentElement.lang=key; document.documentElement.dir=L.dir; document.body.dir=L.dir; document.querySelectorAll('#languageSetting option').forEach(o=>{o.textContent=UI_LANGS[o.value].name}); const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT); while(walker.nextNode()){const n=walker.currentNode, v=n.nodeValue.trim(); if(L.texts[v]) n.nodeValue=n.nodeValue.replace(v,L.texts[v]);} const sel=$('languageSetting'); if(sel)sel.value=key; const h=$('languageHint'); if(h)h.textContent=L.texts['تتغير واجهة التطبيق حسب اللغة المختارة، بينما يبقى نص القرآن الكريم باللغة العربية.']||UI_LANGS.ar.texts['تتغير واجهة التطبيق حسب اللغة المختارة، بينما يبقى نص القرآن الكريم باللغة العربية.'];}
+
+const defaultSettings={volume:1,autoNext:true,autoPlay:true,darkMode:true,fontSize:'medium',notifications:false,language:'ar'};
+function getSettings(){try{return {...defaultSettings,...JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')}}catch{return {...defaultSettings}}}
+function saveSettings(x){localStorage.setItem(SETTINGS_KEY,JSON.stringify(x))}
+function applySettings(){const s=getSettings();const a=$('audio');a.volume=Math.max(0,Math.min(1,Number(s.volume)));document.body.classList.toggle('light-mode',!s.darkMode);document.body.classList.remove('font-small','font-large');if(s.fontSize!=='medium')document.body.classList.add('font-'+s.fontSize);}
+function countSavedDownloads(){let total=0;const state=getDownloadState();Object.values(state).forEach(x=>{if(x&&Number.isFinite(Number(x.done))) total+=Math.max(0,Math.min(114,Number(x.done)));});return total;}
+function refreshSettingsUI(){const s=getSettings();$('volumeSetting').value=Math.round(s.volume*100);$('volumeValue').textContent=Math.round(s.volume*100)+'%';$('autoNextSetting').checked=!!s.autoNext;$('autoPlaySetting').checked=!!s.autoPlay;$('darkModeSetting').checked=!!s.darkMode;$('fontSizeSetting').value=s.fontSize;$('fontSizeValue').textContent={small:'صغير',medium:'متوسط',large:'كبير'}[s.fontSize]||'متوسط';$('notificationsSetting').checked=!!s.notifications;$('downloadSummary').textContent=`تم حفظ ${countSavedDownloads()} سورة على هذا الجهاز (بحسب سجل التنزيلات).`; const ls=$('languageSetting'); if(ls)ls.value=s.language||'ar';}
+async function requestNotifications(enabled){if(!enabled){const s=getSettings();s.notifications=false;saveSettings(s);return;}if(!('Notification' in window)){alert('هذا المتصفح لا يدعم التنبيهات.');$('notificationsSetting').checked=false;return;}const p=await Notification.requestPermission();const s=getSettings();s.notifications=p==='granted';saveSettings(s);$('notificationsSetting').checked=s.notifications;$('notificationStatus').textContent=s.notifications?'تم السماح بالتنبيهات. لن تُستخدم للإعلانات.': 'لم يتم السماح بالتنبيهات.';}
+function setupSettings(){const btn=$('settingsBtn');if(!btn)return;btn.onclick=()=>{$('settingsModal').classList.remove('hidden');refreshSettingsUI()};$('closeSettings').onclick=()=>$('settingsModal').classList.add('hidden');$('settingsModal').addEventListener('click',e=>{if(e.target.id==='settingsModal')$('settingsModal').classList.add('hidden')});$('volumeSetting').oninput=e=>{const s=getSettings();s.volume=Number(e.target.value)/100;saveSettings(s);applySettings();$('volumeValue').textContent=e.target.value+'%'};$('autoNextSetting').onchange=e=>{const s=getSettings();s.autoNext=e.target.checked;saveSettings(s)};$('autoPlaySetting').onchange=e=>{const s=getSettings();s.autoPlay=e.target.checked;saveSettings(s)};$('darkModeSetting').onchange=e=>{const s=getSettings();s.darkMode=e.target.checked;saveSettings(s);applySettings()};$('fontSizeSetting').onchange=e=>{const s=getSettings();s.fontSize=e.target.value;saveSettings(s);applySettings();refreshSettingsUI()};$('notificationsSetting').onchange=e=>requestNotifications(e.target.checked);$('languageSetting').onchange=e=>{const s=getSettings();s.language=e.target.value;saveSettings(s);location.reload()};$('manageDownloadsBtn').onclick=()=>{alert('لإدارة السور المحفوظة: افتح قائمة القارئ، وستجد حالة كل سورة وزر تنزيلها. لا نحذف الملفات تلقائيًا حتى لا تفقدها دون قصد.');};}
+
+let reciterView='all';
+function saveFavoriteReciters(){localStorage.setItem(RECITER_FAV_KEY,JSON.stringify([...favoriteReciters]));}
+function toggleReciterFavorite(key){if(favoriteReciters.has(key))favoriteReciters.delete(key);else favoriteReciters.add(key);saveFavoriteReciters();renderReciters();}
+function setReciterView(view){reciterView=view;document.querySelectorAll('.reciter-tab').forEach(b=>b.classList.remove('active'));$(view==='favorites'?'favoriteRecitersBtn':'allRecitersBtn').classList.add('active');renderReciters();}
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function status(t){$('status').textContent=t}
+function complete(x){if(Number(x?.surah_total)!==114)return false;const a=new Set(String(x.surah_list||'').split(',').map(Number).filter(Boolean));return a.size===114&&Array.from({length:114},(_,i)=>a.has(i+1)).every(Boolean)}
+const MUKHTAR_PROBLEM_SURAHS=[20,41];
+function isMukhtar(r){return String(r?.name_ar||'').includes('مختار الحاج')||String(r?.name_en||'').toLowerCase().includes('mukhtar')}
+function availableSurahNumbers(r){return Array.from({length:114},(_,i)=>i+1)}
+function availableSurahTotal(r){return 114}
+function filename(n){return String(n).padStart(3,'0')+'.mp3'}
+function urlsFor(r,n){
+ let primary=(r.server_url||'').replace(/\/+$/,'/')+filename(n); let fallback='';
+ try{const u=new URL(primary);fallback=u.origin+'/download'+u.pathname}catch{}
+ const mukhtar=isMukhtar(r); if(mukhtar&&(n===20||n===41))primary+=`?noor_fix_v47=${n}`;
+ return [...new Set([primary,fallback].filter(Boolean))];
+}
+const FALLBACK_RECITERS=[
+ {id:1,moshafId:1,name_ar:'إبراهيم الأخضر',name_en:'Ibrahim Al-Akdar',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server6.mp3quran.net/akdr/'},
+ {id:4,moshafId:4,name_ar:'أبو بكر الشاطري',name_en:'Abu Bakr Al Shatri',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server11.mp3quran.net/shatri/'},
+ {id:5,moshafId:5,name_ar:'أحمد بن علي العجمي',name_en:'Ahmad Al-Ajmy',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server10.mp3quran.net/ajm/'},
+ {id:6,moshafId:6,name_ar:'أحمد الحواشي',name_en:'Ahmad Al-Hawashi',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server11.mp3quran.net/hawashi/'},
+ {id:8,moshafId:8,name_ar:'أحمد صابر',name_en:'Ahmad Saber',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server8.mp3quran.net/saber/'},
+ {id:9,moshafId:9,name_ar:'أحمد نعينع',name_en:'Ahmad Nauina',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server11.mp3quran.net/ahmad_nu/'},
+ {id:10,moshafId:10,name_ar:'أكرم العلاقمي',name_en:'Akram Alalaqmi',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server9.mp3quran.net/akrm/'},
+ {id:12,moshafId:12,name_ar:'إدريس أبكر',name_en:'Idrees Abkr',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server6.mp3quran.net/abkr/'},
+ {id:13,moshafId:13,name_ar:'الزين محمد أحمد',name_en:'Alzain Mohammad Ahmad',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server9.mp3quran.net/alzain/'},
+ {id:14,moshafId:14,name_ar:'القارئ ياسين',name_en:'Al-Qaria Yassen',moshaf:'ورش عن نافع - مرتل',server_url:'https://server11.mp3quran.net/qari/'},
+ {id:16,moshafId:16,name_ar:'الشيخ عبد الباسط عبد الصمد',name_en:'Abdul Basit AbdusSamad',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server7.mp3quran.net/basit/'},
+ {id:18,moshafId:18,name_ar:'الشيخ ماهر المعيقلي',name_en:'Maher Al Muaiqly',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server12.mp3quran.net/maher/'},
+ {id:20,moshafId:20,name_ar:'الشيخ مشاري العفاسي',name_en:'Mishary Alafasy',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server8.mp3quran.net/afs/'},
+ {id:21,moshafId:21,name_ar:'الشيخ سعد الغامدي',name_en:'Saad Al-Ghamdi',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server7.mp3quran.net/s_gmd/'},
+ {id:22,moshafId:22,name_ar:'الشيخ ياسر الدوسري',name_en:'Yasser Al-Dosari',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server11.mp3quran.net/yasser/'},
+ {id:23,moshafId:23,name_ar:'الشيخ عبدالله الجهني',name_en:'Abdullah Al-Juhany',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server11.mp3quran.net/jhn/'},
+ {id:24,moshafId:24,name_ar:'الشيخ سعود الشريم',name_en:'Saud Al-Shuraim',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server7.mp3quran.net/shur/'},
+ {id:25,moshafId:25,name_ar:'الشيخ عبدالرحمن السديس',name_en:'Abdulrahman Al-Sudais',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server11.mp3quran.net/sds/'},
+ {id:26,moshafId:26,name_ar:'الشيخ محمد صديق المنشاوي',name_en:'Mohamed Siddiq Al-Minshawi',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server10.mp3quran.net/minsh/'},
+ {id:27,moshafId:27,name_ar:'الشيخ محمود خليل الحصري',name_en:'Mahmoud Khalil Al-Husary',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server13.mp3quran.net/husr/'},
+];
+async function loadReciters(){
+ status('جارٍ تحميل دليل القرّاء…');
+ let lastErr=null;
+ for(const url of CATALOG_URLS){
+  try{
+   const r=await fetch(url,{cache:'no-store'}); if(!r.ok)throw new Error('catalog '+r.status);
+   const data=await r.json(); const out=[];
+   for(const rec of data.reciters||[]) for(const m of rec.moshaf||[]) { const server=m.server_url||m.server; if(complete({...m,server_url:server})) out.push({key:`${rec.id}-${m.id}`,id:rec.id,moshafId:m.id,name_ar:rec.name_arabic||rec.name||'قارئ',name_en:rec.name_transliteration||'',moshaf:m.moshaf_name||m.name||'تلاوة كاملة',server_url:server}); }
+   reciters=out.filter((x,i,a)=>a.findIndex(y=>y.key===x.key)===i);
+   if(reciters.length){renderReciters();status(`تم تحميل ${reciters.length} تلاوة كاملة.`);return;}
+  }catch(e){lastErr=e;}
+ }
+ reciters=FALLBACK_RECITERS.map(r=>({...r,key:`${r.id}-${r.moshafId}`}));
+ renderReciters();
+ status('تعذر تحميل الدليل الخارجي؛ تم عرض قائمة قرّاء جاهزة ويمكنك الاستماع والتنزيل مباشرة.');
+ console.warn('catalog failed',lastErr);
+}
+function renderReciters(){
+ const q=$('search').value.trim().toLowerCase();
+ let list=reciters.filter(r=>`${r.name_ar} ${r.name_en} ${r.moshaf}`.toLowerCase().includes(q));
+ if(reciterView==='favorites')list=list.filter(r=>favoriteReciters.has(r.key));
+ $('reciterCount').textContent=list.length;$('favoriteReciterCount').textContent=favoriteReciters.size;
+ $('reciters').innerHTML=list.map(r=>{
+  const active=selected&&selected.key===r.key; const fav=favoriteReciters.has(r.key); const st=getDownloadState()[r.key];
+  const total=availableSurahTotal(r);
+  const completeAll=!!st&&Number(st.done)===total&&(!Array.isArray(st.failed)||st.failed.length===0);
+  const downloadControl=completeAll?'<span class="reciter-download-done" title="تم تنزيل جميع السور المتاحة لهذا القارئ">✓ تم تنزيل الكل</span>':`<button class="reciter-download-all" type="button" title="تحميل جميع السور المتاحة لـ ${esc(r.name_ar)}">⬇ تحميل الكل</button>`;
+  return `<article class="card${active?' selected-reciter':''}" data-key="${esc(r.key)}"><div class="avatar">🎙️</div><div class="card-text"><h3 class="reciter-name-row"><span>${esc(r.name_ar)}</span>${downloadControl}${active?'<span class="selected-badge">✓ القارئ الحالي</span>':''}</h3><p>${esc(r.name_en)}<br>${esc(r.moshaf)}</p><small>${active?'يتم الفتح عليه الآن':(fav?'⭐ مضاف إلى المفضلة':`${total} سورة متاحة`)}</small></div><button class="reciter-favorite${fav?' is-favorite':''}" type="button" title="${fav?'إزالة من المفضلة':'إضافة إلى المفضلة'}" aria-label="${fav?'إزالة '+r.name_ar+' من المفضلة':'إضافة '+r.name_ar+' إلى المفضلة'}">${fav?'★':'☆'}</button><div class="arrow">‹</div></article>`
+ }).join('')||'<div class="status">لا توجد نتيجة مطابقة.</div>';
+ document.querySelectorAll('.card').forEach(c=>{
+  c.addEventListener('click',e=>{if(e.target.closest('.reciter-favorite,.reciter-download-all'))return;openReciter(c.dataset.key)});
+  const b=c.querySelector('.reciter-favorite'); if(b)b.addEventListener('click',e=>{e.stopPropagation();toggleReciterFavorite(c.dataset.key)});
+  const d=c.querySelector('.reciter-download-all'); if(d)d.addEventListener('click',e=>{e.stopPropagation();openReciter(c.dataset.key);setTimeout(()=>downloadAllSurahs(),120)});
+ });
+}
+function syncDownloadAllButton(){const btn=$('downloadAllBtn');if(!btn||!selected)return;const st=getDownloadState()[selected.key];const total=availableSurahTotal(selected);const completeAll=!!st&&Number(st.done)===total&&(!Array.isArray(st.failed)||st.failed.length===0);btn.classList.toggle('hidden',completeAll);btn.disabled=false;if(!completeAll)btn.textContent='⬇ تنزيل الكل';}
+function openReciter(key){selected=reciters.find(r=>r.key===key);if(!selected)return;renderReciters();$('modalTitle').textContent=selected.name_ar;$('modalSubtitle').textContent=`${selected.name_en} — ${selected.moshaf}`;$('surahSearch').value='';renderSurahs();syncDownloadAllButton();$('modal').classList.remove('hidden')}
+
+const AUDIO_CACHE_NAME='quran-audio-offline-v46';
+const TEXT_CACHE_PREFIX='quran_text_offline_v28_';
+async function cacheAudioUrl(url){
+ const cache=await caches.open(AUDIO_CACHE_NAME);
+ const existing=await cache.match(url);
+ if(existing){
+   if(existing.type==='opaque' || existing.status===200){return true;}
+   try{await cache.delete(url)}catch{}
+ }
+ // Only cache a genuinely complete HTTP response. A 206 Partial Content response
+ // is deliberately rejected because caching it would produce a shortened MP3.
+ try{
+   const res=await fetch(url,{mode:'cors',cache:'no-store'});
+   if(res.status===200){
+     const len=Number(res.headers.get('content-length')||0);
+     if(len>0){
+       const copy=res.clone();
+       const buf=await copy.arrayBuffer();
+       if(buf.byteLength!==len) return false;
+     }
+     await cache.put(url,res.clone());
+     return true;

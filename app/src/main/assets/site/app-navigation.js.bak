@@ -1,0 +1,110 @@
+/* v19: unified Android/PWA back navigation.
+   Settings is a real history entry, so the phone Back button closes Settings
+   instead of closing the installed app. The reciter modal keeps its existing
+   back behavior as well. */
+(function(){
+  const baseUrl=()=>location.href.split('#')[0];
+  const settings=()=>document.getElementById('settingsModal');
+  const settingsBtn=()=>document.getElementById('settingsBtn');
+  const closeSettings=()=>document.getElementById('closeSettings');
+  const modal=()=>document.getElementById('modal');
+  const player=()=>document.getElementById('player');
+  let settingsOpen=false;
+  let reciterOpen=false;
+  let internalBack=false;
+
+  function ensureRoot(){
+    if(!history.state || history.state.__noorRoot!==true){
+      history.replaceState({__noorRoot:true,app:'root'},'',baseUrl());
+    }
+  }
+
+  function openSettings(){
+    if(settingsOpen)return;
+    ensureRoot();
+    settingsOpen=true;
+    history.pushState({__noorRoot:true,app:'settings'},'',baseUrl()+'#settings');
+    const el=settings();
+    if(el){
+      el.classList.remove('hidden');
+      el.setAttribute('aria-hidden','false');
+    }
+    if(typeof refreshSettingsUI==='function')refreshSettingsUI();
+  }
+
+  function hideSettings(){
+    const el=settings();
+    if(el){
+      el.classList.add('hidden');
+      el.setAttribute('aria-hidden','true');
+    }
+    settingsOpen=false;
+  }
+
+  function backFromSettings(){
+    if(settingsOpen){history.back();return;}
+    hideSettings();
+  }
+
+  // app.js has already installed its normal settings handlers by the time
+  // this file loads. Replace those handlers with history-aware ones.
+  const sb=settingsBtn();
+  const cs=closeSettings();
+  if(sb)sb.onclick=openSettings;
+  if(cs)cs.onclick=backFromSettings;
+  const sm=settings();
+  if(sm)sm.addEventListener('click',e=>{
+    if(e.target.id==='settingsModal')backFromSettings();
+  });
+
+  // Reciter modal navigation.
+  function openReciterState(){
+    if(reciterOpen)return;
+    reciterOpen=true;
+    history.pushState({__noorReciter:true},'',baseUrl()+'#reciter');
+  }
+  function closeReciter(){
+    modal()?.classList.add('hidden');
+    modal()?.setAttribute('aria-hidden','true');
+    reciterOpen=false;
+    player()?.classList.add('hidden');
+  }
+
+  document.addEventListener('click',function(e){
+    const card=e.target.closest?.('.card');
+    if(card){setTimeout(openReciterState,30);return;}
+    if(e.target.closest?.('#closeModal') && reciterOpen){
+      internalBack=true;
+      history.back();
+      setTimeout(()=>{internalBack=false;if(reciterOpen)closeReciter()},250);
+    }
+  },true);
+
+  window.addEventListener('popstate',function(e){
+    if(internalBack)return;
+    if(settingsOpen){
+      hideSettings();
+      return;
+    }
+    if(reciterOpen){
+      closeReciter();
+      return;
+    }
+    // At the app root there is intentionally no navigation target outside
+    // the app created by this controller.
+  });
+
+  window.addEventListener('hashchange',function(){
+    if(settingsOpen && location.hash!=='#settings')hideSettings();
+    if(reciterOpen && location.hash!=='#reciter')closeReciter();
+  });
+
+  ensureRoot();
+  if(location.hash==='#settings'){
+    history.replaceState({__noorRoot:true,app:'root'},'',baseUrl());
+    hideSettings();
+  }else if(location.hash==='#reciter'){
+    history.replaceState({__noorRoot:true,app:'root'},'',baseUrl());
+    closeReciter();
+  }
+})();

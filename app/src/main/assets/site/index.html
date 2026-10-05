@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#061a3a">
+<title>القرآن الكريم — استماع صوتي</title>
+<meta name="description" content="استماع إلى القرآن الكريم بأصوات القراء، مع جميع السور ونص الآيات.">
+<link rel="stylesheet" href="style.css">
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="القرآن الكريم">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-bismillah">﷽</div>
+    <div><h1 id="brandTitle">القرآن الكريم</h1><p id="brandSubtitle">استماع صوتي</p></div>
+  </div>
+  <button id="settingsBtn" class="settings-btn" type="button" aria-label="الإعدادات">⚙️ الإعدادات</button>
+</header>
+<main>
+  <section class="hero">
+    <div class="pill" id="heroPill">🎧 قرآن صوتي فقط</div>
+    <h2><span id="heroMain">استمع إلى كتاب الله</span><br><span id="heroSub">بأصوات القرّاء</span></h2>
+    <p id="heroDesc">اختر القارئ ثم السورة وابدأ الاستماع مباشرة.</p>
+    <button id="installAppBtn" class="install-app-btn" type="button" hidden>📲 تثبيت الموقع على الهاتف</button><div class="hero-note" id="heroNote">تظهر لكل قارئ السور المتاحة له، ولا يُعرض تسجيل ناقص على أنه تلاوة كاملة.</div>
+  </section>
+  <section class="controls">
+    <div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="ابحث عن قارئ…" autocomplete="off"></div>
+    <div class="stats"><strong id="reciterCount">—</strong><span id="statsLabel">تلاوة كاملة</span></div>
+  </section>
+<div class="offline-note" role="note"><span id="offlineNoteText">ℹ️ <strong>ملاحظة مهمة:</strong> السور التي يتم تنزيلها بنجاح تُحفظ على هذا الجهاز للاستماع إليها بدون إنترنت. قد يحذف المتصفح الملفات المحفوظة تلقائيًا إذا تم مسح بيانات الموقع أو التخزين المؤقت، لذلك لا تحذف بيانات الموقع إذا أردت الاحتفاظ بالسور المحفوظة. قد تكون بعض تسجيلات السور غير كاملة، وذلك بسبب المصدر الصوتي.</span></div>
+  <div class="quran-listen-note" role="note">📖 <strong><span id="quranListenLead">قال الله تعالى:</span> ﴿وَإِذَا قُرِئَ الْقُرْآنُ فَاسْتَمِعُوا لَهُ وَأَنصِتُوا لَعَلَّكُمْ تُرْحَمُونَ﴾</strong></div>
+  <div class="reciter-tabs" role="tablist" aria-label="قائمة القرّاء"><button id="allRecitersBtn" class="reciter-tab active" type="button">كل القرّاء</button><button id="favoriteRecitersBtn" class="reciter-tab" type="button">⭐ المفضلة <span id="favoriteReciterCount">0</span></button></div>
+  <div id="status" class="status">جارٍ تحميل قائمة القرّاء…</div>
+  <section id="reciters" class="reciters" aria-live="polite"></section>
+</main>
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+ <div class="modal-card">
+  <div class="modal-head">
+   <div><span class="small-label" id="chooseSurahLabel">اختيار السورة</span><h3 id="modalTitle">القارئ</h3><div id="modalSubtitle" class="small-label"></div></div>
+   <div class="modal-head-actions"><button id="downloadAllBtn" class="download-all-btn" type="button" title="حفظ جميع السور لهذا القارئ للاستماع بدون إنترنت">⬇ تنزيل الكل</button><button id="closeModal" class="close-btn" aria-label="إغلاق">×</button></div>
+  </div>
+  <div class="surah-search"><input id="surahSearch" type="search" placeholder="ابحث عن سورة…"></div>
+  <div id="downloadProgress" class="download-progress hidden" aria-live="polite">
+    <div class="download-progress-head"><strong id="downloadProgressText">جاهز للتنزيل</strong><span id="downloadPercent">0%</span></div>
+    <div class="download-progress-track"><div id="downloadProgressBar" class="download-progress-bar" style="width:0%"></div></div>
+    <div id="downloadCurrent" class="download-current">لم يبدأ التنزيل بعد</div>
+  </div>
+  <div id="downloadStatus" class="download-status" aria-live="polite"></div>
+  <div id="downloadFailedBox" class="download-failed hidden" aria-live="polite"><strong id="downloadFailedTitle">السور التي تعذر إكمال تنزيلها:</strong><ol id="downloadFailedList"></ol></div>
+  <div id="surahs" class="surahs"></div>
+ </div>
+</div>
+<div id="player" class="player hidden">
+ <div class="player-info">
+  <div class="disc">♪</div>
+  <div><strong id="nowSurah">—</strong><span id="nowReciter">—</span></div>
+ </div>
+ <div id="ayahPanel" class="player-ayah hidden" aria-live="polite">
+   <div id="ayahTitle" class="player-ayah-title">الآية الحالية</div>
+   <div id="ayahs" class="player-ayah-text"></div>
+   <div id="ayahTranslation" class="player-ayah-translation hidden"></div>
+ </div>
+ <div class="player-controls">
+  <button id="prevBtn" title="السورة السابقة">⏮</button>
+  <button id="playBtn" class="play" title="تشغيل">▶</button>
+  <button id="nextBtn" title="السورة التالية">⏭</button>
+ </div>
+ <div class="progress-row"><span id="currentTime">0:00</span><input id="progress" type="range" min="0" max="100" value="0"><span id="duration">0:00</span></div>
+ <div class="audio-state" id="audioState">جاهز للتشغيل</div>
+ <audio id="audio" preload="auto" playsinline></audio>
+</div>
+
+<div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+ <div class="modal-card settings-card">
+  <div class="modal-head"><div><span id="settingsCustomize" class="small-label">تخصيص التطبيق</span><h3 id="settingsTitle">⚙️ الإعدادات</h3><div id="settingsServiceNote" class="small-label">إعدادات لخدمة المستخدم فقط — بدون إعلانات أو اشتراكات.</div></div><button id="closeSettings" class="close-btn" aria-label="إغلاق">×</button></div>
+  <div class="settings-list">
+   <section class="settings-section"><h4 id="audioSettingsTitle">🔊 الصوت والتشغيل</h4>
+    <label class="setting-row"><span><span id="volumeLabelText">مستوى الصوت</span> <b id="volumeValue">100%</b></span><input id="volumeSetting" type="range" min="0" max="100" value="100"></label>
+    <label class="setting-row"><span id="autoNextLabel">تشغيل السورة التالية تلقائيًا</span><input id="autoNextSetting" type="checkbox" checked></label>
+    <label class="setting-row"><span id="autoPlayLabel">التشغيل التلقائي عند اختيار السورة</span><input id="autoPlaySetting" type="checkbox" checked></label>
+   </section>
+   <section class="settings-section"><h4 id="appearanceSettingsTitle">🎨 المظهر والقراءة</h4>
+    <label class="setting-row"><span id="darkModeLabel">الوضع الداكن</span><input id="darkModeSetting" type="checkbox" checked></label>
+    <label class="setting-row"><span><span id="fontSizeLabelText">حجم الخط</span> <b id="fontSizeValue">متوسط</b></span><select id="fontSizeSetting"><option value="small">صغير</option><option value="medium" selected>متوسط</option><option value="large">كبير</option></select></label>
+    <label class="setting-row"><span id="backgroundLabel">خلفية التطبيق</span><select id="backgroundPreset">
+      <option value="default">اللون الافتراضي</option>
+      <option value="blue">أزرق داكن</option>
+      <option value="green">أخضر داكن</option>
+      <option value="purple">بنفسجي داكن</option>
+      <option value="brown">بني داكن</option>
+      <option value="black">أسود</option>
+      <option value="custom">لون من اختيارك</option>
+    </select></label>
+    <label id="customBackgroundRow" class="setting-row custom-color-row hidden"><span id="customBackgroundLabel">اختر لون الخلفية</span><input id="customBackgroundColor" type="color" value="#061a3a" aria-label="اختر لون الخلفية"></label>
+    <div id="backgroundHint" class="settings-hint">يمكنك اختيار لون جاهز أو اختيار أي لون تريده من منتقي الألوان، وسيتم حفظ اختيارك على هذا الجهاز.</div>
+    <label class="setting-row"><span id="translationSettingLabel">إظهار ترجمة معاني الآيات</span><input id="translationSetting" type="checkbox" checked></label>
+    <div id="translationSettingHint" class="settings-hint">عند اختيار لغة غير العربية، تُعرض ترجمة لمعاني الآية أسفل النص العربي، وتُحفظ على الجهاز عند تحميلها.</div>
+   </section>
+   <section class="settings-section"><h4 id="notificationsSettingsTitle">🔔 التنبيهات</h4>
+    <label class="setting-row"><span id="notificationsLabel">السماح بتنبيهات القرآن الكريم</span><input id="notificationsSetting" type="checkbox"></label>
+    <div id="notificationStatus" class="settings-hint">التنبيهات اختيارية، وتصل كتذكيرات من القرآن الكريم كل 4 ساعات، ولن تُستخدم للإعلانات.</div>
+   </section>
+   <section class="settings-section"><h4 id="downloadsSettingsTitle">📥 التنزيلات</h4>
+    <div class="download-summary" id="downloadSummary">جارٍ حساب السور المحفوظة…</div>
+    <button id="manageDownloadsBtn" class="settings-action" type="button">🗑️ إدارة السور المحفوظة</button>
+   </section>
+   <section class="settings-section"><h4 id="languageSettingsTitle">🌐 اللغة</h4>
+    <label class="setting-row"><span id="languageLabel">لغة واجهة التطبيق</span><select id="languageSetting" aria-label="لغة واجهة التطبيق">
+      <option value="ar">العربية</option><option value="en">English</option><option value="tr">Türkçe</option><option value="fr">Français</option><option value="ur">اردو</option><option value="id">Bahasa Indonesia</option>
+    </select></label>
+    <div class="settings-hint" id="languageHint">تتغير واجهة التطبيق حسب اللغة المختارة، بينما يبقى نص القرآن الكريم باللغة العربية.</div>
+   </section>
+   <section class="settings-section about-settings"><h4 id="aboutSettingsTitle">ℹ️ حول القرآن الكريم</h4><div id="aboutHint" class="settings-hint">تطبيق مجاني لخدمة كتاب الله، والإصدار الحالي v68.</div></section>
+  </div>
+ </div>
+</div>
+<script src="app.js"></script><script src="app-install.js"></script>
+<script src="app-navigation.js"></script>
+</body>
+</html>
