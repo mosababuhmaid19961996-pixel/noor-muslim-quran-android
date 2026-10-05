@@ -6,47 +6,58 @@ on:
       - main
   workflow_dispatch:
 
-concurrency:
-  group: quran-apk-main
-  cancel-in-progress: true
+permissions:
+  contents: read
 
 jobs:
   build:
+    name: Build and verify APK
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
 
-      - name: Set up Gradle
+      - name: Install Android SDK packages
+        run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle 9.5
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.5.0'
 
-      - name: Build APK
-        run: gradle --no-daemon assembleDebug
+      - name: Show tool versions
+        run: |
+          java -version
+          gradle --version
+          adb version
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" version
+
+      - name: Build debug APK
+        run: gradle --no-daemon --stacktrace assembleDebug
 
       - name: Verify APK
         run: |
           APK="app/build/outputs/apk/debug/app-debug.apk"
           test -s "$APK"
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$APK"
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | head -n 20
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | head -n 30
           sha256sum "$APK"
 
-      - name: Upload APK
+      - name: Upload verified APK
         uses: actions/upload-artifact@v4
         with:
           name: Noor-Muslim-Quran-APK
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
