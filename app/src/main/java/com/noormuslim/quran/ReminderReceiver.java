@@ -144,7 +144,7 @@ public final class ReminderReceiver extends BroadcastReceiver {
                 ? new Notification.Builder(context, CHANNEL_ID)
                 : new Notification.Builder(context);
 
-        builder.setSmallIcon(R.drawable.ic_stat_quran)
+        builder.setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("القرآن الكريم • " + message[0])
                 .setContentText(message[1])
                 .setStyle(new Notification.BigTextStyle().bigText(message[1]))
