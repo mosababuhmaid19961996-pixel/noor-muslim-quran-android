@@ -26,11 +26,25 @@ public class MainActivity extends Activity {
         webView = new WebView(this);
         setContentView(webView);
         configureWebView(webView);
-        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 2026);
-        }
-        ReminderReceiver.schedule(this);
+        // Notification permission is requested only when the user enables reminders in Settings.
+        ReminderReceiver.ensureScheduled(this);
         webView.loadUrl("https://noor.local/index.html");
+    }
+
+    public void notifyNotificationPermissionResult(boolean granted) {
+        if (webView == null || destroyed) return;
+        webView.post(() -> webView.evaluateJavascript(
+                "window.__quranNativeNotificationResult && window.__quranNativeNotificationResult(" + granted + ");",
+                null));
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != 2026 || webView == null || destroyed) return;
+        boolean granted = Build.VERSION.SDK_INT < 33 ||
+                (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED);
+        notifyNotificationPermissionResult(granted);
     }
 
     private void configureWebView(WebView wv) {
