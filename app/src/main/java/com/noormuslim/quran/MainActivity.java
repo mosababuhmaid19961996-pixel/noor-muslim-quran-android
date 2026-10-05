@@ -103,12 +103,14 @@ public class MainActivity extends Activity {
 
     @Override public void onBackPressed() {
         if (webView == null || destroyed) { finish(); return; }
+
+        // Let the web app handle its own internal navigation first.
+        // This closes Settings/reciter screens and returns to the main list
+        // without accidentally finishing the Android Activity.
         webView.evaluateJavascript(
-                "(function(){var m=document.getElementById('modal'),s=document.getElementById('settingsModal');return (m&&!m.classList.contains('hidden'))||(s&&!s.classList.contains('hidden'));})()",
+                "(function(){try{if(window.__quranAndroidBack){return window.__quranAndroidBack()===true;}return false;}catch(e){return false;}})()",
                 value -> {
-                    boolean overlay = "true".equals(value);
-                    if (overlay && webView.canGoBack()) webView.goBack();
-                    else finish();
+                    if (!"true".equals(value)) finish();
                 });
     }
 
