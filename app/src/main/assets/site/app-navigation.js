@@ -82,6 +82,26 @@
     }
   }catch{}
 
+  // Android hardware Back: close an internal screen first, and only let
+  // the native Activity finish when the user is already at the main list.
+  window.__quranAndroidBack=function(){
+    if(settingsOpen || reciterOpen){
+      history.back();
+      return true;
+    }
+    const m=modal();
+    if(m && !m.classList.contains('hidden')){
+      hideReciter();
+      return true;
+    }
+    const s=settings();
+    if(s && !s.classList.contains('hidden')){
+      hideSettings();
+      return true;
+    }
+    return false;
+  };
+
   window.addEventListener('popstate',e=>{
     if(internalNav)return;
     const s=e.state||{};
