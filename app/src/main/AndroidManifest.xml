@@ -11,7 +11,7 @@
         android:allowBackup="true"
         android:label="القرآن الكريم"
         android:icon="@drawable/quran_karim_launcher_image"
-        android:roundIcon="@drawable/quran_karim_launcher"
+        android:roundIcon="@drawable/quran_karim_launcher_image"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
