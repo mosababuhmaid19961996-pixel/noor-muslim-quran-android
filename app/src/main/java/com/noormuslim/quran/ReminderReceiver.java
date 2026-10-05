@@ -17,17 +17,17 @@ public class ReminderReceiver extends BroadcastReceiver {
     private static final long FOUR_HOURS = 4L * 60L * 60L * 1000L;
 
     private static final String[] TITLES = {
-        "تذكير إيماني 🌿",
-        "آية تذكّر بها قلبك 📖",
-        "من السنة النبوية ﷺ",
-        "ذكر الله يطمئن القلوب 🤍"
+        "ذكر الله 🤍",
+        "ذكر قصير 🌿",
+        "لا تنسَ ذكر الله",
+        "تذكير بالذكر"
     };
 
     private static final String[] MESSAGES = {
-        "﴿ألا بذكر الله تطمئن القلوب﴾ — الرعد: 28",
-        "﴿فاذكروني أذكركم واشكروا لي ولا تكفرون﴾ — البقرة: 152",
-        "قال ﷺ: «من صلى علي واحدة صلى الله عليه بها عشراً»",
-        "سبحان الله، والحمد لله، والله أكبر."
+        "سبحان الله، والحمد لله، والله أكبر.",
+        "سبحان الله وبحمده، سبحان الله العظيم.",
+        "لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير.",
+        "أستغفر الله وأتوب إليه."
     };
 
     @Override
@@ -71,10 +71,10 @@ public class ReminderReceiver extends BroadcastReceiver {
 
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
-                    "التذكيرات الإسلامية",
+                    "تذكيرات الأذكار",
                     NotificationManager.IMPORTANCE_DEFAULT
             );
-            channel.setDescription("آيات وأحاديث وأذكار كل أربع ساعات");
+            channel.setDescription("أذكار قصيرة كل أربع ساعات");
             manager.createNotificationChannel(channel);
         }
     }
