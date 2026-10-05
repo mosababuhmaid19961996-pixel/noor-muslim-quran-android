@@ -10,8 +10,8 @@
     <application
         android:allowBackup="true"
         android:label="القرآن الكريم"
-        android:icon="@drawable/ic_quran"
-        android:roundIcon="@drawable/ic_quran"
+        android:icon="@drawable/quran_karim_launcher"
+        android:roundIcon="@drawable/quran_karim_launcher"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
