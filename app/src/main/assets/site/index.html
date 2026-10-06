@@ -16,6 +16,25 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 </head>
 <body>
+<div id="welcomeSplash" class="welcome-splash hidden" role="dialog" aria-label="الترحيب بتطبيق القرآن الكريم">
+  <div class="welcome-orb welcome-orb-one"></div>
+  <div class="welcome-orb welcome-orb-two"></div>
+  <div class="welcome-splash-card">
+    <div class="welcome-logo-wrap">
+      <div class="welcome-logo-ring"></div>
+      <img class="welcome-splash-logo" src="icons/icon-512.png" alt="القرآن الكريم">
+    </div>
+    <div class="welcome-splash-bismillah">﷽</div>
+    <div class="welcome-eyebrow">أهلًا وسهلًا بك</div>
+    <h2>القرآن الكريم</h2>
+    <p>استمع إلى كتاب الله بأصوات القرّاء</p>
+    <button id="welcomeEnterBtn" class="welcome-enter-btn" type="button">
+      <span>دخول إلى التطبيق</span>
+      <span class="welcome-countdown" id="welcomeCountdown">10</span>
+    </button>
+    <div class="welcome-splash-hint">سيتم الدخول تلقائيًا خلال <strong id="welcomeSeconds">10</strong> ثوانٍ</div>
+  </div>
+</div>
 <header class="topbar">
   <div class="brand">
     <div class="brand-bismillah">﷽</div>

@@ -1,3 +1,19 @@
+function initWelcomeSplash(){
+  const splash=document.getElementById('welcomeSplash');
+  if(!splash || !window.AndroidQuran) return;
+  try{if(!window.AndroidQuran.isNative()) return;}catch{return;}
+  splash.classList.remove('hidden');
+  const btn=document.getElementById('welcomeEnterBtn');
+  const secondsEl=document.getElementById('welcomeSeconds');
+  const countEl=document.getElementById('welcomeCountdown');
+  let remaining=10, closed=false;
+  const close=()=>{if(closed)return;closed=true;splash.classList.add('hidden');window.setTimeout(()=>splash.remove(),550);};
+  if(btn) btn.addEventListener('click',close);
+  const tick=()=>{if(secondsEl)secondsEl.textContent=remaining;if(countEl)countEl.textContent=remaining;};
+  tick();
+  const timer=window.setInterval(()=>{remaining--;tick();if(remaining<=0){window.clearInterval(timer);close();}},1000);
+}
+
 const CATALOG_URLS=['./reciters.json','https://mp3quran.net/api/v3/reciters?language=ar','https://cdn.jsdelivr.net/gh/uthumany/Quran-Fast-Api-json@main/data/quran_reciters.json','https://raw.githubusercontent.com/uthumany/Quran-Fast-Api-json/main/data/quran_reciters.json'];
 const QURAN_URL='https://api.alquran.cloud/v1';
 const names=['الفاتحة','البقرة','آل عمران','النساء','المائدة','الأنعام','الأعراف','الأنفال','التوبة','يونس','هود','يوسف','الرعد','إبراهيم','الحجر','النحل','الإسراء','الكهف','مريم','طه','الأنبياء','الحج','المؤمنون','النور','الفرقان','الشعراء','النمل','القصص','العنكبوت','الروم','لقمان','السجدة','الأحزاب','سبأ','فاطر','يس','الصافات','ص','الزمر','غافر','فصلت','الشورى','الزخرف','الدخان','الجاثية','الأحقاف','محمد','الفتح','الحجرات','ق','الذاريات','الطور','النجم','القمر','الرحمن','الواقعة','الحديد','المجادلة','الحشر','الممتحنة','الصف','الجمعة','المنافقون','التغابن','الطلاق','التحريم','الملك','القلم','الحاقة','المعارج','نوح','الجن','المزمل','المدثر','القيامة','الإنسان','المرسلات','النبأ','النازعات','عبس','التكوير','الانفطار','المطففين','الانشقاق','البروج','الطارق','الأعلى','الغاشية','الفجر','البلد','الشمس','الليل','الضحى','الشرح','التين','العلق','القدر','البينة','الزلزلة','العاديات','القارعة','التكاثر','العصر','الهمزة','الفيل','قريش','الماعون','الكوثر','الكافرون','النصر','المسد','الإخلاص','الفلق','الناس'];
@@ -1216,6 +1232,7 @@ document.addEventListener('visibilitychange',()=>{
   document.addEventListener('touchcancel',()=>{tracking=false;},{passive:true});
 })();
 
+initWelcomeSplash();
 applySettings();setupSettings(); applyLanguage();
 
 loadReciters().then(()=>restoreLastPlayback()).catch(err=>{console.error('loadReciters failed',err);try{if(!reciters.length)reciters=FALLBACK_RECITERS.map(r=>({...r,key:`${r.id}-${r.moshafId}`}));renderReciters();status(T('تم عرض قائمة القرّاء الجاهزة. يمكنك الاستماع والتنزيل مباشرة.'));}catch(e){console.error('reader fallback failed',e);}});

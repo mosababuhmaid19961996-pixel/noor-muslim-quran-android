@@ -321,3 +321,25 @@ body.light-mode .player-controls button{color:var(--noor-text,#172033)!important
   .quran-search-focus .player{transform:translateY(100%);opacity:0}
   .quran-search-focus .reciters{padding-bottom:24px}
 }
+
+/* Modern Quran Karim welcome entrance */
+.welcome-splash{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;overflow:hidden;padding:22px;background:radial-gradient(circle at 50% 18%,rgba(227,190,109,.14),transparent 28%),radial-gradient(circle at 15% 85%,rgba(70,118,180,.18),transparent 32%),linear-gradient(145deg,#041225 0%,#071c36 52%,#0a2846 100%);opacity:1;visibility:visible;transition:opacity .5s ease,visibility .5s ease}
+.welcome-splash.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.welcome-splash-card{position:relative;width:min(455px,94vw);padding:30px 24px 24px;text-align:center;border:1px solid rgba(227,190,109,.24);border-radius:32px;background:linear-gradient(180deg,rgba(12,35,60,.88),rgba(5,18,35,.94));box-shadow:0 30px 90px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(16px);animation:welcomeCardIn .7s cubic-bezier(.2,.8,.2,1) both}
+.welcome-logo-wrap{position:relative;width:190px;height:190px;margin:0 auto 18px;display:grid;place-items:center}
+.welcome-logo-ring{position:absolute;inset:-9px;border-radius:50%;background:conic-gradient(from 0deg,#e3be6d,#fff0b4,#b98535,#e3be6d);opacity:.78;animation:welcomeRing 4s linear infinite}
+.welcome-logo-ring::after{content:"";position:absolute;inset:4px;border-radius:50%;background:#061a3a}
+.welcome-splash-logo{position:relative;z-index:1;width:182px;height:182px;object-fit:cover;border-radius:50%;box-shadow:0 14px 35px rgba(0,0,0,.35)}
+.welcome-splash-bismillah{color:#e8c77b;font-size:31px;line-height:1.1;margin-bottom:8px}
+.welcome-eyebrow{color:#a8bdd5;font-size:12px;font-weight:800;letter-spacing:.04em}
+.welcome-splash-card h2{margin:6px 0 6px;color:#fffaf0;font-size:28px;font-weight:950;letter-spacing:.01em}
+.welcome-splash-card p{margin:0 auto 20px;color:#d9e4ef;font-size:15px;line-height:1.8}
+.welcome-enter-btn{width:min(320px,100%);min-height:54px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:12px;border:1px solid rgba(255,255,255,.14);border-radius:17px;background:linear-gradient(135deg,#e3be6d,#c9963e);color:#07182c;font-size:16px;font-weight:950;cursor:pointer;box-shadow:0 12px 28px rgba(0,0,0,.22),0 0 0 1px rgba(255,255,255,.08) inset;transition:transform .18s ease,filter .18s ease,box-shadow .18s ease}
+.welcome-enter-btn:hover{transform:translateY(-2px);filter:brightness(1.06);box-shadow:0 16px 34px rgba(0,0,0,.26)}
+.welcome-enter-btn:active{transform:translateY(0)}
+.welcome-enter-btn:focus-visible{outline:3px solid #fff0b4;outline-offset:3px}
+.welcome-countdown{min-width:30px;height:30px;display:grid;place-items:center;padding:0 8px;border-radius:999px;background:rgba(7,24,44,.18);font-size:13px}
+.welcome-splash-hint{margin-top:12px;color:#90a7c2;font-size:11px}.welcome-splash-hint strong{color:#e3be6d;font-size:13px}
+.welcome-orb{position:absolute;border-radius:50%;pointer-events:none;filter:blur(2px);opacity:.4}.welcome-orb-one{width:280px;height:280px;top:-90px;left:-80px;background:radial-gradient(circle,rgba(227,190,109,.2),transparent 70%);animation:welcomeFloatOne 7s ease-in-out infinite}.welcome-orb-two{width:330px;height:330px;right:-120px;bottom:-130px;background:radial-gradient(circle,rgba(72,126,192,.2),transparent 70%);animation:welcomeFloatTwo 8s ease-in-out infinite}
+@keyframes welcomeCardIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}@keyframes welcomeRing{to{transform:rotate(360deg)}}@keyframes welcomeFloatOne{50%{transform:translate(22px,18px) scale(1.05)}}@keyframes welcomeFloatTwo{50%{transform:translate(-18px,-20px) scale(1.04)}}
+@media(max-width:700px){.welcome-splash{padding:14px}.welcome-splash-card{padding:24px 16px 20px;border-radius:26px}.welcome-logo-wrap{width:158px;height:158px;margin-bottom:15px}.welcome-splash-logo{width:150px;height:150px}.welcome-splash-bismillah{font-size:26px}.welcome-splash-card h2{font-size:23px}.welcome-splash-card p{font-size:13px;margin-bottom:16px}.welcome-enter-btn{min-height:51px;font-size:15px}}
