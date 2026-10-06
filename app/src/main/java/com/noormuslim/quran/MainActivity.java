@@ -11,6 +11,8 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +21,7 @@ import java.util.Locale;
 public class MainActivity extends Activity {
     private WebView webView;
     private boolean destroyed = false;
+    private OnBackInvokedCallback backCallback;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,6 +31,11 @@ public class MainActivity extends Activity {
         configureWebView(webView);
         // Notification permission is requested only when the user enables reminders in Settings.
         ReminderReceiver.ensureScheduled(this);
+        if (Build.VERSION.SDK_INT >= 33) {
+            backCallback = this::handleBackPress;
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    OnBackInvokedDispatcher.PRIORITY_DEFAULT, backCallback);
+        }
         webView.loadUrl("https://noor.local/index.html");
     }
 
@@ -101,20 +109,22 @@ public class MainActivity extends Activity {
         }
     }
 
-    @Override public void onBackPressed() {
+    private void handleBackPress() {
         if (webView == null || destroyed) { finish(); return; }
-
-        // Let the web app handle its own internal navigation first.
-        // This closes Settings/reciter screens and returns to the main list
-        // without accidentally finishing the Android Activity.
-        webView.evaluateJavascript(
-                "(function(){try{if(window.__quranAndroidBack){return window.__quranAndroidBack()===true;}return false;}catch(e){return false;}})()",
-                value -> {
-                    if (!"true".equals(value)) finish();
-                });
+        webView.post(() -> webView.evaluateJavascript(
+                "(function(){try{if(window.__quranAndroidBack){window.__quranAndroidBack();return true;}return true;}catch(e){return true;}})()",
+                null
+        ));
     }
 
+    @Override public void onBackPressed() {
+        handleBackPress();
+    }
     @Override protected void onDestroy() {
+        if (Build.VERSION.SDK_INT >= 33 && backCallback != null) {
+            try { getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(backCallback); } catch (Exception ignored) {}
+            backCallback = null;
+        }
         destroyed = true;
         if (webView != null) {
             webView.stopLoading();
