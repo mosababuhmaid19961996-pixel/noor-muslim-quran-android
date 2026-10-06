@@ -1,7 +1,11 @@
 package com.noormuslim.quran;
 
-import android.webkit.JavascriptInterface;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.webkit.JavascriptInterface;
+
 import java.util.Locale;
 
 import org.json.JSONArray;
@@ -11,22 +15,48 @@ import org.json.JSONObject;
 public final class NativeBridge {
     private final MainActivity activity;
     private TextToSpeech tts;
+    private boolean ttsReady = false;
+    private boolean welcomePending = false;
+    private static final String WELCOME_TEXT = "اللهم صل وسلم وبارك على نبينا محمد";
 
     public NativeBridge(MainActivity activity) {
         this.activity = activity;
         activity.runOnUiThread(() -> {
             try {
                 tts = new TextToSpeech(activity, status -> {
-                    if (status == TextToSpeech.SUCCESS) {
-                        int result = tts.setLanguage(new Locale("ar"));
-                        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                            tts.setLanguage(new Locale("ar", "SA"));
-                        }
-                        tts.setSpeechRate(0.88f);
-                        tts.setPitch(1.0f);
+                    if (status != TextToSpeech.SUCCESS || tts == null) {
+                        ttsReady = false;
+                        return;
+                    }
+
+                    int result = tts.setLanguage(new Locale("ar", "SA"));
+                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        result = tts.setLanguage(new Locale("ar"));
+                    }
+                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        ttsReady = false;
+                        return;
+                    }
+
+                    try {
+                        tts.setAudioAttributes(new AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                                .build());
+                    } catch (Exception ignored) {}
+
+                    tts.setSpeechRate(0.90f);
+                    tts.setPitch(1.0f);
+                    ttsReady = true;
+
+                    if (welcomePending) {
+                        welcomePending = false;
+                        speakWelcomeNow();
                     }
                 });
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                ttsReady = false;
+            }
         });
     }
 
@@ -34,22 +64,40 @@ public final class NativeBridge {
 
     @JavascriptInterface public void speakWelcome() {
         activity.runOnUiThread(() -> {
-            try {
-                if (tts == null) return;
-                tts.speak("اللهم صل وسلم وبارك على نبينا محمد", TextToSpeech.QUEUE_FLUSH, null, "quran_welcome");
-            } catch (Exception ignored) {}
+            if (!ttsReady || tts == null) {
+                // The TTS engine initializes asynchronously. Remember the request
+                // so the welcome speech plays as soon as Arabic TTS is ready.
+                welcomePending = true;
+                return;
+            }
+            speakWelcomeNow();
         });
+    }
+
+    private void speakWelcomeNow() {
+        try {
+            if (tts == null || !ttsReady) return;
+            Bundle params = new Bundle();
+            params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC);
+            params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f);
+            tts.speak(WELCOME_TEXT, TextToSpeech.QUEUE_FLUSH, params, "quran_welcome");
+        } catch (Exception ignored) {}
     }
 
     @JavascriptInterface public void stopWelcomeSpeech() {
         activity.runOnUiThread(() -> {
-            try { if (tts != null) tts.stop(); } catch (Exception ignored) {}
+            try {
+                welcomePending = false;
+                if (tts != null) tts.stop();
+            } catch (Exception ignored) {}
         });
     }
 
     public void shutdownTts() {
         activity.runOnUiThread(() -> {
             try {
+                welcomePending = false;
+                ttsReady = false;
                 if (tts != null) {
                     tts.stop();
                     tts.shutdown();
@@ -118,7 +166,11 @@ public final class NativeBridge {
     @JavascriptInterface public void downloadAudio(String requestJson) {
         try {
             JSONObject r = new JSONObject(requestJson);
-            NativeDownloadStore.enqueue(activity, r.optString("key", ""), r.optInt("surah", 1), r.optJSONArray("urls") == null ? new JSONArray() : r.optJSONArray("urls"));
+            NativeDownloadStore.enqueue(
+                    activity,
+                    r.optString("key", ""),
+                    r.optInt("surah", 1),
+                    r.optJSONArray("urls") == null ? new JSONArray() : r.optJSONArray("urls"));
         } catch (Exception ignored) {}
     }
 
