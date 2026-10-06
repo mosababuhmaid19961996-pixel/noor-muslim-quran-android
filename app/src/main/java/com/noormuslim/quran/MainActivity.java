@@ -129,7 +129,7 @@ public class MainActivity extends Activity {
         }
         destroyed = true;
         if (nativeBridge != null) {
-            nativeBridge.shutdownTts();
+            nativeBridge.shutdownWelcomeAudio();
             nativeBridge = null;
         }
         if (webView != null) {
