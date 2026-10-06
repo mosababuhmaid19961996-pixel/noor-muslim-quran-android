@@ -311,3 +311,13 @@ body.light-mode .player-controls button{color:var(--noor-text,#172033)!important
   .player-ayah-text p{font-size:15px;line-height:1.4}
   .player-close{top:4px;inset-inline-end:5px;width:28px;height:28px;font-size:21px}
 }
+
+/* v72: keep reader search results visible above the fixed player */
+.reciters{padding-bottom:170px;scroll-margin-bottom:170px}
+.quran-search-focus .player{transform:translateY(calc(100% + 14px));opacity:.08;pointer-events:none;transition:transform .18s ease,opacity .18s ease}
+.quran-search-focus .reciters{padding-bottom:30px}
+@media(max-width:700px){
+  .reciters{padding-bottom:150px;scroll-margin-bottom:150px}
+  .quran-search-focus .player{transform:translateY(100%);opacity:0}
+  .quran-search-focus .reciters{padding-bottom:24px}
+}
