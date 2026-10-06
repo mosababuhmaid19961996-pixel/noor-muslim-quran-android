@@ -391,6 +391,36 @@ function nativePlayerSync(){
   });
  }catch{}
 }
+/* Android hardware-back navigation: return from secondary screens to the main reader list. */
+window.__quranAndroidBack=function(){
+  try{
+    const settings=$('settingsModal');
+    const modal=$('modal');
+    let handled=false;
+    if(settings && !settings.classList.contains('hidden')){
+      settings.classList.add('hidden');
+      handled=true;
+    }
+    if(modal && !modal.classList.contains('hidden')){
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden','true');
+      const s=$('surahSearch');
+      if(s) s.value='';
+      renderSurahs();
+      handled=true;
+    }
+    if($('search') && $('search').value){
+      $('search').value='';
+      renderReciters();
+      handled=true;
+    }
+    window.scrollTo(0,0);
+    return true;
+  }catch(e){
+    return true;
+  }
+};
+
 if(NATIVE_QURAN) setInterval(nativePlayerSync,700);
 const FALLBACK_RECITERS=[
  {id:1,moshafId:1,name_ar:'إبراهيم الأخضر',name_en:'Ibrahim Al-Akdar',moshaf:'حفص عن عاصم - مرتل',server_url:'https://server6.mp3quran.net/akdr/'},
