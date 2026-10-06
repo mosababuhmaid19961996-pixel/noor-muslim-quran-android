@@ -4,6 +4,7 @@ import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.Voice;
 import android.webkit.JavascriptInterface;
 
 import java.util.Locale;
@@ -45,6 +46,11 @@ public final class NativeBridge {
                                 .build());
                     } catch (Exception ignored) {}
 
+                    try {
+                        Voice maleArabic = findPreferredMaleArabicVoice();
+                        if (maleArabic != null) tts.setVoice(maleArabic);
+                    } catch (Exception ignored) {}
+
                     tts.setSpeechRate(0.90f);
                     tts.setPitch(1.0f);
                     ttsReady = true;
@@ -72,6 +78,23 @@ public final class NativeBridge {
             }
             speakWelcomeNow();
         });
+    }
+
+    private Voice findPreferredMaleArabicVoice() {
+        try {
+            if (tts == null || tts.getVoices() == null) return null;
+            Voice fallbackArabic = null;
+            for (Voice voice : tts.getVoices()) {
+                if (voice == null || voice.getLocale() == null) continue;
+                if (!"ar".equalsIgnoreCase(voice.getLocale().getLanguage())) continue;
+                String name = voice.getName() == null ? "" : voice.getName().toLowerCase(Locale.ROOT);
+                if (name.contains("male") || name.contains("man") || name.contains("masculine")) return voice;
+                if (!voice.isNetworkConnectionRequired()) fallbackArabic = voice;
+            }
+            return fallbackArabic;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private void speakWelcomeNow() {
