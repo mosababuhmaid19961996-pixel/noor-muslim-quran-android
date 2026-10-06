@@ -1,4 +1,4 @@
-name: Build Noor Muslim APK
+name: Build Quran Karim APK
 
 on:
   push:
@@ -28,9 +28,14 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK packages
-        run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+        with:
+          cmdline-tools-version: 12266719
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: true
+          packages: |
+            platform-tools
+            platforms;android-36
+            build-tools;36.0.0
 
       - name: Bundle current reciter catalog
         run: |
@@ -80,6 +85,6 @@ jobs:
       - name: Upload verified APK
         uses: actions/upload-artifact@v4
         with:
-          name: Noor-Muslim-Quran-APK
+          name: Quran-Karim-APK
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
