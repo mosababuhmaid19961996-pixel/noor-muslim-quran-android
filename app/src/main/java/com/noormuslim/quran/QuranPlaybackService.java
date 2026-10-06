@@ -21,6 +21,8 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.HashMap;
+import java.util.Map;
 
 public class QuranPlaybackService extends Service {
     public static final String ACTION_PLAY = "com.noormuslim.quran.PLAY";
@@ -125,7 +127,7 @@ public class QuranPlaybackService extends Service {
     }
 
     private void setupMediaSession() {
-        mediaSession = new MediaSession(this, "NoorMuslimQuran");
+        mediaSession = new MediaSession(this, "QuranKarim");
         mediaSession.setCallback(new MediaSession.Callback() {
             @Override public void onPlay() { playInternal(); }
             @Override public void onPause() { pauseInternal(); }
@@ -135,6 +137,7 @@ public class QuranPlaybackService extends Service {
             @Override public void onStop() { stopSelfAndPlayer(); }
         });
         mediaSession.setActive(true);
+        updateMediaMetadata();
     }
 
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
@@ -162,6 +165,7 @@ public class QuranPlaybackService extends Service {
         title = req.optString("title", "السورة " + surah);
         artist = req.optString("artist", "القرآن الكريم");
         autoNext = req.optBoolean("autoNext", true);
+        updateMediaMetadata();
         try { urls = req.optJSONArray("urls"); if (urls == null) urls = new JSONArray(); } catch (Exception ignored) { urls = new JSONArray(); }
         double position = Math.max(0, req.optDouble("position", 0));
         prepareCurrent(position);
@@ -184,7 +188,10 @@ public class QuranPlaybackService extends Service {
             if (local.isFile() && local.length() > 4096) {
                 player.setDataSource(local.getAbsolutePath());
             } else if (urls.length() > 0) {
-                player.setDataSource(this, Uri.parse(urls.optString(0)));
+                Map<String,String> headers = new HashMap<>();
+                headers.put("User-Agent", "Mozilla/5.0 (Android) QuranKarim/2.0");
+                headers.put("Accept", "audio/mpeg,audio/*;q=0.9,*/*;q=0.8");
+                player.setDataSource(this, Uri.parse(urls.optString(0)), headers);
             } else {
                 throw new IllegalStateException("No audio source");
             }
@@ -193,6 +200,7 @@ public class QuranPlaybackService extends Service {
                 preparing.set(false);
                 if (seekSeconds > 0 && seekSeconds < (mp.getDuration() / 1000.0) - 0.5) mp.seekTo((int) (seekSeconds * 1000));
                 mp.start();
+                updateMediaMetadata();
                 updatePlaybackState();
                 updateNotification();
             });
@@ -202,6 +210,7 @@ public class QuranPlaybackService extends Service {
                     int next = surah >= 114 ? 1 : surah + 1;
                     surah = next;
                     title = "السورة " + next;
+                    updateMediaMetadata();
                     urls = nextUrls(urls, next);
                     prepareCurrent(0);
                 } else {
@@ -266,6 +275,7 @@ public class QuranPlaybackService extends Service {
         int next = surah >= 114 ? 1 : surah + 1;
         surah = next;
         title = "السورة " + next;
+        updateMediaMetadata();
         urls = nextUrls(urls, next);
         prepareCurrent(0);
     }
@@ -274,6 +284,7 @@ public class QuranPlaybackService extends Service {
         int prev = surah <= 1 ? 114 : surah - 1;
         surah = prev;
         title = "السورة " + prev;
+        updateMediaMetadata();
         urls = nextUrls(urls, prev);
         prepareCurrent(0);
     }
@@ -302,6 +313,18 @@ public class QuranPlaybackService extends Service {
             try { player.release(); } catch (Exception ignored) {}
             player = null;
         }
+    }
+
+    private void updateMediaMetadata() {
+        if (mediaSession == null) return;
+        try {
+            android.media.MediaMetadata metadata = new android.media.MediaMetadata.Builder()
+                    .putString(android.media.MediaMetadata.METADATA_KEY_TITLE, title)
+                    .putString(android.media.MediaMetadata.METADATA_KEY_ARTIST, artist)
+                    .putString(android.media.MediaMetadata.METADATA_KEY_ALBUM, "القرآن الكريم")
+                    .build();
+            mediaSession.setMetadata(metadata);
+        } catch (Exception ignored) {}
     }
 
     private void updatePlaybackState() {

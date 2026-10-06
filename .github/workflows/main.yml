@@ -32,6 +32,28 @@ jobs:
       - name: Install Android SDK packages
         run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
+      - name: Bundle current reciter catalog
+        run: |
+          mkdir -p app/src/main/assets/site
+          curl -fsSL --retry 3 --retry-all-errors "https://mp3quran.net/api/v3/reciters?language=ar" -o app/src/main/assets/site/reciters.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("app/src/main/assets/site/reciters.json")
+          data = json.loads(p.read_text(encoding="utf-8"))
+          reciters = data.get("reciters") or []
+          complete = 0
+          for rec in reciters:
+              for m in rec.get("moshaf") or []:
+                  if int(m.get("surah_total") or 0) == 114:
+                      nums = {int(x) for x in str(m.get("surah_list") or "").split(",") if str(x).strip().isdigit()}
+                      if len(nums) == 114 and all(i in nums for i in range(1, 115)):
+                          complete += 1
+          print(f"Bundled {len(reciters)} readers; {complete} complete recitations.")
+          if complete < 2:
+              raise SystemExit("Reciter catalog validation failed: fewer than 2 complete recitations.")
+          PY
+
       - name: Set up Gradle 9.5
         uses: gradle/actions/setup-gradle@v4
         with:
