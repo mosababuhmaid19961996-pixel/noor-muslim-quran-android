@@ -1027,6 +1027,7 @@ async function recoverAudio(reason='انقطاع مؤقت'){
  },Math.min(5000,1000*retryCount));
 }
 const closePlayer=$('closePlayer');if(closePlayer)closePlayer.onclick=()=>{$('player').classList.add('hidden');};
+const searchInput=$('search');if(searchInput){searchInput.addEventListener('focus',()=>document.body.classList.add('quran-search-focus'));searchInput.addEventListener('blur',()=>document.body.classList.remove('quran-search-focus'));searchInput.addEventListener('input',()=>{requestAnimationFrame(()=>{const list=$('reciters');if(list&&document.body.classList.contains('quran-search-focus')){const r=list.getBoundingClientRect();if(r.top<72)window.scrollTo({top:Math.max(0,window.scrollY+r.top-82),behavior:'smooth'});}});});}
 $('downloadAllBtn').addEventListener('click',downloadAllSurahs);$('allRecitersBtn').addEventListener('click',()=>setReciterView('all'));$('favoriteRecitersBtn').addEventListener('click',()=>setReciterView('favorites'));$('search').addEventListener('input',renderReciters);$('surahSearch').addEventListener('input',renderSurahs);$('closeModal').onclick=()=>$('modal').classList.add('hidden');$('modal').addEventListener('click',e=>{if(e.target.id==='modal')$('modal').classList.add('hidden')});
 $('playBtn').onclick=()=>{
  if(NATIVE_QURAN){try{window.AndroidQuran.togglePlay();setTimeout(nativePlayerSync,120)}catch{};return;}
