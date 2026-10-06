@@ -1,6 +1,8 @@
 package com.noormuslim.quran;
 
 import android.webkit.JavascriptInterface;
+import android.speech.tts.TextToSpeech;
+import java.util.Locale;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -8,10 +10,54 @@ import org.json.JSONObject;
 /** JavaScript bridge used only by the bundled Android build. */
 public final class NativeBridge {
     private final MainActivity activity;
+    private TextToSpeech tts;
 
-    public NativeBridge(MainActivity activity) { this.activity = activity; }
+    public NativeBridge(MainActivity activity) {
+        this.activity = activity;
+        activity.runOnUiThread(() -> {
+            try {
+                tts = new TextToSpeech(activity, status -> {
+                    if (status == TextToSpeech.SUCCESS) {
+                        int result = tts.setLanguage(new Locale("ar"));
+                        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                            tts.setLanguage(new Locale("ar", "SA"));
+                        }
+                        tts.setSpeechRate(0.88f);
+                        tts.setPitch(1.0f);
+                    }
+                });
+            } catch (Exception ignored) {}
+        });
+    }
 
     @JavascriptInterface public boolean isNative() { return true; }
+
+    @JavascriptInterface public void speakWelcome() {
+        activity.runOnUiThread(() -> {
+            try {
+                if (tts == null) return;
+                tts.speak("اللهم صل وسلم وبارك على نبينا محمد", TextToSpeech.QUEUE_FLUSH, null, "quran_welcome");
+            } catch (Exception ignored) {}
+        });
+    }
+
+    @JavascriptInterface public void stopWelcomeSpeech() {
+        activity.runOnUiThread(() -> {
+            try { if (tts != null) tts.stop(); } catch (Exception ignored) {}
+        });
+    }
+
+    public void shutdownTts() {
+        activity.runOnUiThread(() -> {
+            try {
+                if (tts != null) {
+                    tts.stop();
+                    tts.shutdown();
+                    tts = null;
+                }
+            } catch (Exception ignored) {}
+        });
+    }
 
     @JavascriptInterface public boolean hasNotificationPermission() {
         if (android.os.Build.VERSION.SDK_INT < 33) return true;
