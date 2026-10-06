@@ -20,6 +20,7 @@ import java.util.Locale;
 
 public class MainActivity extends Activity {
     private WebView webView;
+    private NativeBridge nativeBridge;
     private boolean destroyed = false;
     private OnBackInvokedCallback backCallback;
 
@@ -67,7 +68,8 @@ public class MainActivity extends Activity {
         s.setBuiltInZoomControls(false);
         s.setDisplayZoomControls(false);
         wv.setBackgroundColor(0x00000000);
-        wv.addJavascriptInterface(new NativeBridge(this), "AndroidQuran");
+        nativeBridge = new NativeBridge(this);
+        wv.addJavascriptInterface(nativeBridge, "AndroidQuran");
         wv.setWebViewClient(new LocalAssetClient());
     }
 
@@ -126,6 +128,10 @@ public class MainActivity extends Activity {
             backCallback = null;
         }
         destroyed = true;
+        if (nativeBridge != null) {
+            nativeBridge.shutdownTts();
+            nativeBridge = null;
+        }
         if (webView != null) {
             webView.stopLoading();
             webView.removeJavascriptInterface("AndroidQuran");
