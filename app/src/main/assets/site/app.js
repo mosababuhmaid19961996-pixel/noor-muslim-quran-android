@@ -348,6 +348,7 @@ function urlsFor(r,n){
 // Native Android build: delegate persistent downloads/background playback to the
 // Android foreground service. The normal web/PWA implementation remains as fallback.
 const NATIVE_QURAN = (()=>{try{return !!window.AndroidQuran && window.AndroidQuran.isNative&&window.AndroidQuran.isNative()}catch{return false}})();
+let pendingNativeReciterKey='';
 function nativeDownloadRequest(n){return {key:selected?.key||'',surah:n,urls:urlsFor(selected,n)}}
 function nativePlaybackRequest(n,position=0){
  const st=getSettings();
@@ -371,7 +372,9 @@ function nativePlayerSync(){
   if(!st.active){return;}
   const n=Number(st.surah)||currentSurah;
   if(n&&n!==currentSurah){currentSurah=n;currentAyahIndex=0;renderSurahs();}
-  if(st.key&&st.key!==selected?.key){
+  if(pendingNativeReciterKey){
+    if(st.key===pendingNativeReciterKey) pendingNativeReciterKey='';
+  }else if(st.key&&st.key!==selected?.key){
     const rec=reciters.find(r=>r.key===st.key);if(rec){selected=rec;renderReciters();renderSurahs();syncDownloadAllButton();}
   }
   if(n) $('nowSurah').textContent=`${n}. ${surahName(n)}`;
@@ -449,7 +452,28 @@ function renderReciters(){
  });
 }
 function syncDownloadAllButton(){const btn=$('downloadAllBtn');if(!btn||!selected)return;const total=availableSurahTotal(selected);const normalized=normalizeDownloadStateFor(selected.key,total);const st=normalized[selected.key];const downloaded=Array.isArray(st?.downloaded)?st.downloaded.length:Number(st?.done)||0;const completeAll=downloaded===total&&(!Array.isArray(st?.failed)||st.failed.length===0);btn.classList.remove('hidden');btn.disabled=completeAll;if(completeAll){btn.textContent=T('✓ تم تنزيل الكل');btn.classList.add('download-all-done');btn.title=T('تم حفظ جميع السور المتاحة لهذا القارئ');}else{btn.textContent=T('⬇ تحميل الكل');btn.classList.remove('download-all-done');btn.title=T('تحميل جميع السور المتاحة لهذا القارئ');}}
-function openReciter(key){selected=reciters.find(r=>r.key===key);if(!selected)return;renderReciters();$('modalTitle').textContent=localizedReciterName(selected);$('modalSubtitle').textContent=`${localizedReciterName(selected)} — ${localizedMoshaf(selected.moshaf)}`;$('surahSearch').value='';renderSurahs();syncDownloadAllButton();$('modal').classList.remove('hidden')}
+function openReciter(key){
+ const nextReciter=reciters.find(r=>r.key===key);if(!nextReciter)return;
+ let nativeState=null;
+ if(NATIVE_QURAN){
+  try{nativeState=JSON.parse(window.AndroidQuran.getState()||'{}')}catch{}
+ }
+ const switchingLive=!!(NATIVE_QURAN&&nativeState?.active&&selected&&selected.key!==nextReciter.key);
+ selected=nextReciter;
+ if(switchingLive) pendingNativeReciterKey=selected.key;
+ renderReciters();
+ $('modalTitle').textContent=localizedReciterName(selected);
+ $('modalSubtitle').textContent=`${localizedReciterName(selected)} — ${localizedMoshaf(selected.moshaf)}`;
+ $('surahSearch').value='';
+ renderSurahs();
+ syncDownloadAllButton();
+ $('modal').classList.remove('hidden');
+ if(switchingLive){
+  const n=Math.max(1,Number(nativeState.surah)||currentSurah||1);
+  const pos=Math.max(0,Number(nativeState.position)||0);
+  playSurah(n,pos,true);
+ }
+}
 
 const AUDIO_CACHE_NAME='quran-audio-offline-v59';
 const TEXT_CACHE_PREFIX='quran_text_offline_v29_';
@@ -606,9 +630,19 @@ function renderSurahs(){
    row.querySelector('.surah-download').addEventListener('click',e=>{e.stopPropagation();downloadSurah(Number(row.dataset.num),e.currentTarget)});
    row.querySelector('.surah-play').addEventListener('click',()=>{
      const n=Number(row.dataset.num);
+     if(NATIVE_QURAN){
+       try{
+         const nativeState=JSON.parse(window.AndroidQuran.getState()||'{}');
+         if(nativeState.active&&Number(nativeState.surah)===n){
+           if(nativeState.playing){userPaused=true;backgroundWanted=false;}
+           else {userPaused=false;backgroundWanted=true;}
+           window.AndroidQuran.togglePlay();
+           setTimeout(nativePlayerSync,120);
+           return;
+         }
+       }catch{}
+     }
      if(n===currentSurah && !$('audio').paused && !$('audio').ended){
-       // Manual pause from the surah list must never be treated as an
-       // unexpected interruption. Cancel recovery/auto-advance first.
        userPaused=true;
        backgroundWanted=false;
        recovering=false;
@@ -749,11 +783,12 @@ let nextAdvanceArmed=false;
 let nextAdvanceTimer=null;
 const WAIT_RECOVERY_MS=12000;
 const NEXT_ARM_SECONDS=2.5;
-async function loadAudio(n,autoplay=true,resumeAt=0){
- const settings=getSettings(); autoplay=autoplay && settings.autoPlay;
+async function loadAudio(n,autoplay=true,resumeAt=0,forceAutoplay=false){
+ const settings=getSettings(); autoplay=forceAutoplay ? !!autoplay : (autoplay && settings.autoPlay);
  if(NATIVE_QURAN){
   const a=$('audio'); try{a.pause();a.removeAttribute('src');a.load()}catch{}
   currentSurah=n;sourceLoading=false;userPaused=!autoplay;backgroundWanted=!!autoplay;
+  pendingNativeReciterKey=selected?.key||'';
   try{window.AndroidQuran.playSurah(JSON.stringify(nativePlaybackRequest(n,resumeAt)));$('audioState').textContent='جارٍ تشغيل التلاوة في مشغل الخلفية…';$('playBtn').textContent='▶';nativePlayerSync()}catch{ $('audioState').textContent='تعذر تشغيل المشغل الخلفي.'; }
   return;
  }
@@ -830,11 +865,11 @@ async function loadAudio(n,autoplay=true,resumeAt=0){
  },{once:true});
  if(a.readyState>=3) queueMicrotask(start);
 }
-async function playSurah(n,resumeAt=0){
+async function playSurah(n,resumeAt=0,forceAutoplay=false){
  userPaused=false;backgroundWanted=true;
  currentSurah=n;currentAyahIndex=0;timings=[];currentTranslation=null;translationLoadToken++;$('modal').classList.remove('hidden');$('player').classList.remove('hidden');$('modal').setAttribute('aria-hidden','false');$('ayahPanel').classList.add('hidden');$('ayahs').innerHTML='';if($('ayahTranslation')){$('ayahTranslation').classList.add('hidden');$('ayahTranslation').innerHTML='';}$('nowSurah').textContent=`${n}. ${surahName(n)}`;$('nowReciter').textContent=`${localizedReciterName(selected)} — ${localizedMoshaf(selected.moshaf)}`;
  localStorage.setItem('quran_last',JSON.stringify({key:selected.key,surah:n,position:Number(resumeAt)||0}));
- loadAudio(n,true,resumeAt);
+ loadAudio(n,true,resumeAt,forceAutoplay);
  try{
   ayahs=await fetchText(n);renderAyahs();loadCurrentTranslation();
  }catch(e){
