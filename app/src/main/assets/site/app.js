@@ -8,7 +8,8 @@ function initWelcomeSplash(){
   const countEl=document.getElementById('welcomeCountdown');
   let remaining=10, closed=false;
   const close=()=>{if(closed)return;closed=true;splash.classList.add('hidden');window.setTimeout(()=>splash.remove(),550);};
-  if(btn) btn.addEventListener('click',close);
+  if(btn) btn.addEventListener('click',()=>{try{window.AndroidQuran.stopWelcomeSpeech();}catch{}close();});
+  window.setTimeout(()=>{try{window.AndroidQuran.speakWelcome();}catch{}},350);
   const tick=()=>{if(secondsEl)secondsEl.textContent=remaining;if(countEl)countEl.textContent=remaining;};
   tick();
   const timer=window.setInterval(()=>{remaining--;tick();if(remaining<=0){window.clearInterval(timer);close();}},1000);
