@@ -279,3 +279,35 @@ body.light-mode .player-controls button{color:var(--noor-text,#172033)!important
 .player-ayah-translation small{display:block;margin-top:5px;font-size:10px;opacity:.7}
 .translation-loading,.translation-error{font-size:11px;opacity:.8}
 @media(max-width:700px){.player-ayah-translation{padding:7px 9px}.player-ayah-translation p{font-size:15px;line-height:1.55}.player-ayah-translation small{font-size:9px}}
+
+/* v71: smaller player + close button */
+.player{padding:6px 10px calc(6px + env(safe-area-inset-bottom))}
+.player-info{margin-bottom:3px;gap:8px}
+.disc{width:32px;height:32px;font-size:17px}
+.player-info strong{font-size:13px}
+.player-info span{font-size:10px}
+.player-controls{gap:15px}
+.player-controls button{font-size:20px}
+.player-controls .play{width:44px;height:44px;font-size:18px}
+.progress-row{margin-top:2px;font-size:9px;grid-template-columns:38px minmax(0,1fr) 38px;gap:5px}
+.audio-state{font-size:9px;margin-top:1px}
+.player-ayah{margin:4px auto 5px;padding:6px 10px;max-height:78px;min-height:62px}
+.player-ayah-text p{font-size:16px;line-height:1.42}
+.player-ayah-title{font-size:8px}
+.player-close{position:absolute;top:6px;inset-inline-end:8px;z-index:3;width:30px;height:30px;border:1px solid #31557f;border-radius:9px;background:#0d315d;color:#fff;font-size:22px;line-height:1;display:grid;place-items:center;cursor:pointer}
+.player-close:hover{background:#174579}
+.player-info{padding-inline-end:38px}
+@media(max-width:700px){
+  body{padding-bottom:145px}
+  .player{padding:5px 7px calc(5px + env(safe-area-inset-bottom))}
+  .player-info{padding-inline-end:34px;margin-bottom:2px}
+  .disc{width:28px;height:28px;font-size:15px}
+  .player-info strong{font-size:12px}
+  .player-info span{font-size:9px}
+  .player-controls{gap:14px}
+  .player-controls button{font-size:19px}
+  .player-controls .play{width:42px;height:42px;font-size:17px}
+  .player-ayah{margin:3px 0 5px;max-height:76px;min-height:60px;padding:5px 8px}
+  .player-ayah-text p{font-size:15px;line-height:1.4}
+  .player-close{top:4px;inset-inline-end:5px;width:28px;height:28px;font-size:21px}
+}
