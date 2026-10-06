@@ -6,7 +6,7 @@ function initWelcomeSplash(){
   const btn=document.getElementById('welcomeEnterBtn');
   const secondsEl=document.getElementById('welcomeSeconds');
   const countEl=document.getElementById('welcomeCountdown');
-  let remaining=10, closed=false;
+  let remaining=7, closed=false;
   const close=()=>{if(closed)return;closed=true;splash.classList.add('hidden');window.setTimeout(()=>splash.remove(),550);};
   if(btn) btn.addEventListener('click',()=>{try{window.AndroidQuran.stopWelcomeSpeech();}catch{}close();});
   window.setTimeout(()=>{try{window.AndroidQuran.speakWelcome();}catch{}},350);
